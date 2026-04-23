@@ -1,5 +1,5 @@
 const Secret = require('../models/Secret');
-const AccessLog = require('../models/AccessLog');
+const AccessLog = require('../models/ActivityLog');
 const Team = require('../models/Team');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
@@ -96,7 +96,7 @@ const createSecret = async (req, res) => {
       secretId: secret._id,
       teamId: secret.teamId,
       action: 'created',
-      location: locationData
+      ip: req.ip
     });
     
     res.status(201).json({

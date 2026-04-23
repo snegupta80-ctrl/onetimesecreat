@@ -13,7 +13,10 @@ const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    console.log('Signup request:', { name, email, password: '***' });
+
     if (!name || !email || !password) {
+      console.log('Missing fields:', { name: !!name, email: !!email, password: !!password });
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields'
@@ -22,13 +25,16 @@ const signup = async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log('Email already exists:', email);
       return res.status(400).json({
         success: false,
         message: 'Email already registered'
       });
     }
 
+    console.log('Creating user:', name);
     const user = await User.create({ name, email, password });
+    console.log('User created successfully:', user._id);
 
     const token = generateToken(user._id);
 

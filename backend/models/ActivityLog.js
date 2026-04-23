@@ -4,19 +4,21 @@ const accessLogSchema = new mongoose.Schema({
   secretId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Secret',
-    required: true
+    required: false
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    required: false
   },
   teamId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Team'
+    ref: 'Team',
+    required: false
   },
   action: {
     type: String,
-    enum: ['created', 'viewed', 'expired', 'deleted'],
+    enum: ['created', 'viewed', 'expired', 'deleted', 'member_invited', 'member_removed', 'role_updated'],
     required: true
   },
   ip: {

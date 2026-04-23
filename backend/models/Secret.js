@@ -45,9 +45,7 @@ const secretSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: function() {
-      return !this.isAnonymous;
-    }
+    required: false
   },
   isAnonymous: {
     type: Boolean,
