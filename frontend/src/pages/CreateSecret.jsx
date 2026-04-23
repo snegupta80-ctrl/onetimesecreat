@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../utils/api';
 import { encrypt } from '../utils/crypto';
@@ -97,7 +97,9 @@ const CreateSecret = () => {
       if (password) formData.append('password', password);
       formData.append('type', type);
       formData.append('accessLimit', accessLimit);
-      if (tags.length > 0) formData.append('tags', JSON.stringify(tags));
+      if (tags.length > 0) {
+        tags.forEach(tag => formData.append('tags', tag));
+      }
       formData.append('isAnonymous', isAnonymous);
       if (file) formData.append('file', file);
       if (teamId) formData.append('teamId', teamId);

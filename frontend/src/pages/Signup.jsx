@@ -18,7 +18,9 @@ const Signup = () => {
     setLoading(true);
 
     try {
+      console.log('Submitting signup:', { name, email });
       const response = await api.signup(name, email, password);
+      console.log('Signup response:', response);
       
       if (response.success) {
         login(response.data.token, response.data.user);
@@ -27,6 +29,7 @@ const Signup = () => {
         setError(response.message || 'Signup failed');
       }
     } catch (err) {
+      console.error('Signup error:', err);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
