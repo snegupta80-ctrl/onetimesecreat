@@ -116,8 +116,16 @@ const CreateSecret = () => {
 
       if (data.success) {
         setSuccess(true);
-        setShareableLink(data.data.shareableLink);
-        console.log('QR Share URL from backend:', data.data.shareableLink);
+        // Use backend URL if it's not localhost, otherwise use network URL from env
+        const backendUrl = data.data.shareableLink;
+        const networkUrl = `${import.meta.env.VITE_BASE_URL || 'http://localhost:5175'}/view/${backendUrl.split('/').pop()}`;
+        
+        // Use backend URL if it's already a network IP, otherwise use env var
+        const finalUrl = backendUrl.includes('localhost') ? networkUrl : backendUrl;
+        
+        setShareableLink(finalUrl);
+        console.log('QR Share URL from backend:', backendUrl);
+        console.log('QR Share URL (final):', finalUrl);
         setSecret('');
         setPassword('');
         setFile(null);
