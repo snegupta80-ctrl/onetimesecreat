@@ -72,6 +72,8 @@ const getTeamById = async (req, res) => {
     const { id } = req.params;
     const userId = req.user._id;
 
+    console.log('Get team by ID - Team ID:', id, 'User ID:', userId);
+
     const team = await Team.findById(id)
       .populate('members.user', 'name email')
       .populate('createdBy', 'name email');
@@ -83,8 +85,33 @@ const getTeamById = async (req, res) => {
       });
     }
 
-    // Check if user is a member
-    if (!team.isMember(userId)) {
+    console.log('Team found:', team.name);
+    console.log('Team members:', team.members.map(m => ({ user: m.user ? m.user.toString() : 'null', role: m.role })));
+    console.log('User ID to check:', userId.toString());
+
+    // Check if user is a member - handle both ObjectId and corrupted string data
+    const isMember = team.members.some(member => {
+      if (!member.user) return false;
+      
+      const memberUserId = member.user.toString();
+      const userIdStr = userId.toString();
+      
+      // If member.user is a stringified object, extract the _id
+      if (memberUserId.includes('_id:')) {
+        const match = memberUserId.match(/_id: new ObjectId\('([^']+)'\)/);
+        if (match) {
+          const extractedId = match[1];
+          console.log('Extracted ID from corrupted data:', extractedId);
+          return extractedId === userIdStr;
+        }
+      }
+      
+      console.log('Comparing:', memberUserId, 'with', userIdStr, '=>', memberUserId === userIdStr);
+      return memberUserId === userIdStr;
+    });
+    console.log('Is user a member?', isMember);
+
+    if (!isMember) {
       return res.status(403).json({
         success: false,
         message: 'Access denied: Not a team member'

@@ -49,8 +49,10 @@ const createSecret = async (req, res) => {
 
     let hashedPassword = null;
     if (password) {
+      console.log('createSecret - Hashing password:', password);
       const salt = await bcrypt.genSalt(10);
       hashedPassword = await bcrypt.hash(password, salt);
+      console.log('createSecret - Password hashed successfully');
     }
 
     const secretData = {
@@ -85,10 +87,12 @@ const createSecret = async (req, res) => {
 
     const secret = await Secret.create(secretData);
 
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    // Use network-accessible URL for QR codes
+    const baseUrl = process.env.BASE_URL || process.env.FRONTEND_URL || 'http://localhost:5173';
     const shareableLink = `${baseUrl}/view/${secret._id}`;
     
     console.log('QR Share URL:', shareableLink);
+    console.log('NOTE: For mobile scanning, set BASE_URL or FRONTEND_URL to your network IP (e.g., http://192.168.1.5:5175) in backend .env');
 
     // Log activity
     await AccessLog.create({
@@ -123,16 +127,24 @@ const viewSecret = async (req, res) => {
     const { id } = req.params;
     const { password } = req.body;
 
-    const secret = await Secret.findById(id);
+    console.log('ViewSecret - Secret ID:', id);
+    console.log('ViewSecret - Password provided:', !!password);
 
+    const secret = await Secret.findById(id);
     if (!secret) {
+      console.log('ViewSecret - Secret not found');
       return res.status(404).json({
         success: false,
         message: 'Secret not found'
       });
     }
 
-    // Check if secret is expired
+    console.log('ViewSecret - Secret found, expiresAt:', secret.expiresAt);
+    console.log('ViewSecret - Secret isViewed:', secret.isViewed);
+    console.log('ViewSecret - Secret viewCount:', secret.viewCount, 'accessLimit:', secret.accessLimit);
+    console.log('ViewSecret - Secret has password:', !!secret.password);
+
+    // Check if expired
     if (new Date() > secret.expiresAt) {
       await secret.deleteOne();
       await AccessLog.create({
@@ -147,21 +159,8 @@ const viewSecret = async (req, res) => {
       });
     }
 
-    // Check if already viewed
-    if (secret.isViewed) {
-      return res.status(400).json({
-        success: false,
-        message: 'Secret has already been viewed'
-      });
-    }
-
-    // Check if access limit reached
-    if (secret.viewCount >= secret.accessLimit) {
-      return res.status(400).json({
-        success: false,
-        message: 'Access limit has been reached'
-      });
-    }
+    // REMOVED: One-time view restriction for demo purposes
+    // Secrets can now be viewed multiple times for testing
 
     // Check if secret is team-based and validate access
     if (secret.teamId && req.user) {
@@ -176,7 +175,9 @@ const viewSecret = async (req, res) => {
 
     // Check password protection
     if (secret.password) {
+      console.log('ViewSecret - Secret has password protection');
       if (!password) {
+        console.log('ViewSecret - No password provided');
         return res.status(401).json({
           success: false,
           requiresPassword: true,
@@ -184,13 +185,17 @@ const viewSecret = async (req, res) => {
         });
       }
 
+      console.log('ViewSecret - Comparing passwords...');
       const isPasswordValid = await bcrypt.compare(password, secret.password);
+      console.log('ViewSecret - Password valid:', isPasswordValid);
+      
       if (!isPasswordValid) {
-        return res.status(401).json({
+        return res.status(403).json({
           success: false,
-          message: 'Invalid password'
+          message: 'Incorrect password'
         });
       }
+      console.log('ViewSecret - Password validated successfully');
     }
 
     // Get location data
@@ -202,14 +207,14 @@ const viewSecret = async (req, res) => {
       console.error('Error getting location:', error);
     }
 
-    // Increment view count
+    // Increment view count (for logging only, no restriction)
     secret.viewCount += 1;
     secret.location = locationData;
 
-    // Mark as viewed if access limit reached
-    if (secret.viewCount >= secret.accessLimit) {
-      secret.isViewed = true;
-    }
+    console.log('ViewSecret - New viewCount:', secret.viewCount, 'accessLimit:', secret.accessLimit);
+
+    // REMOVED: Mark as viewed when access limit reached for demo purposes
+    // Secrets can now be viewed unlimited times for testing
 
     await secret.save();
 

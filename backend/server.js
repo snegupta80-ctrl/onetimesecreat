@@ -4,6 +4,18 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 
+// Fix: Remove any duplicate MONGODB_URI= prefix from the value
+let mongoUri = process.env.MONGODB_URI;
+if (mongoUri && mongoUri.startsWith('MONGODB_URI=')) {
+  mongoUri = mongoUri.replace(/^MONGODB_URI=/, '');
+  process.env.MONGODB_URI = mongoUri;
+}
+
+// Debug: Log the MONGODB_URI
+console.log('MONGODB_URI from env:', process.env.MONGODB_URI);
+console.log('MONGODB_URI length:', process.env.MONGODB_URI?.length);
+console.log('MONGODB_URI starts with:', process.env.MONGODB_URI?.substring(0, 20));
+
 const authRoutes = require('./routes/auth.routes');
 const secretRoutes = require('./routes/secret.routes');
 const teamRoutes = require('./routes/team.routes');
@@ -18,6 +30,7 @@ const allowedOrigins = [
   'http://localhost:5175',
   'http://localhost:5176',
   'http://localhost:3000',
+  'http://192.168.0.108:5173',
   // Allow any IP on local network (192.168.x.x, 10.x.x.x, etc.)
   ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
 ];
