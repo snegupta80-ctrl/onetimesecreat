@@ -41,6 +41,8 @@ const ViewSecret = () => {
       console.log('ViewSecret - Response:', data);
       console.log('ViewSecret - Response status:', response.status);
       console.log('ViewSecret - Response message:', data.message);
+      console.log('ViewSecret - Response data:', data.data);
+      console.log('ViewSecret - Response data.encryptedData:', data.data?.encryptedData);
 
       if (data.success) {
         if (data.data.type === 'file' && data.data.fileData) {
@@ -48,12 +50,19 @@ const ViewSecret = () => {
           setLocation(data.data.location);
           setViewed(true);
         } else if (data.data.encryptedData) {
+          console.log('ViewSecret - Decrypting secret...');
           const decryptedSecret = decrypt(data.data.encryptedData);
+          console.log('ViewSecret - Decrypted secret:', decryptedSecret);
           setSecret(decryptedSecret);
           setLocation(data.data.location);
           setViewed(true);
+          setRequiresPassword(false); // Hide password form
           // Show beautiful popup with the secret message
           setShowPopup(true);
+          console.log('ViewSecret - Popup should show now, showPopup:', true);
+        } else {
+          console.log('ViewSecret - No encryptedData in response');
+          setError('No secret data received');
         }
       } else if (data.requiresPassword) {
         setRequiresPassword(true);
@@ -172,6 +181,8 @@ const ViewSecret = () => {
     navigator.clipboard.writeText(secret);
     alert('Secret copied to clipboard!');
   };
+
+  console.log('ViewSecret - Render state:', { showPopup, secret, requiresPassword, viewed });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
